@@ -1,54 +1,24 @@
-import { TodoList } from "@/components/TodoList";
-import { TopBar } from "@/components/TopBar";
+import { HomePage } from "@/pages/home/HomePage";
+import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 import * as eva from "@eva-design/eva";
-import {
-  ApplicationProvider,
-  IconRegistry,
-  Layout,
-} from "@ui-kitten/components";
+import { ApplicationProvider, IconRegistry } from "@ui-kitten/components";
 import { EvaIconsPack } from "@ui-kitten/eva-icons";
-import { useState } from "react";
+import Toast from "react-native-toast-message";
 
-export type ItemListProps = {
-  label: string;
-  isChecked: boolean;
-};
-
+const client = new ApolloClient({
+  uri: "http://192.168.1.24:4000", // ❗️PAS localhost
+  cache: new InMemoryCache(),
+});
 export default function Index() {
-  const [items, setItems] = useState<ItemListProps[]>([]);
-
-  const addItem = (label: string) => {
-    setItems((prevItems) => [...prevItems, {
-      label,
-      isChecked: false,
-    }]);
-  };
-
-  const deleteItem = (label: string) => {
-    setItems((prevItems) => prevItems.filter(item => item.label !== label));
-  };
-
-  const toggleItem = (label: string) => {
-    setItems((prevItems) =>
-      prevItems.map(item =>
-        item.label === label ? { ...item, isChecked: !item.isChecked } : item
-      )
-    );
-  };
-
   return (
     <>
-      <IconRegistry icons={EvaIconsPack} />
-      <ApplicationProvider {...eva} theme={eva.light}>
-        <Layout style={{ flex: 1 }}>
-          <TopBar addItem={addItem} />
-          <TodoList
-            items={items}
-            deleteItem={deleteItem}
-            toggleItem={toggleItem}
-          />
-        </Layout>
-      </ApplicationProvider>
+      <ApolloProvider client={client}>
+        <IconRegistry icons={EvaIconsPack} />
+        <ApplicationProvider {...eva} theme={eva.light}>
+          <HomePage />
+        </ApplicationProvider>
+      </ApolloProvider>
+      <Toast />
     </>
   );
 }

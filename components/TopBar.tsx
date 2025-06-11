@@ -1,13 +1,36 @@
-import { Button, Card, Input, Layout, Modal, Text } from "@ui-kitten/components";
+import { ItemListProps } from "@/pages/home/HomePage";
+import { gql, useMutation } from "@apollo/client";
+import {
+  Button,
+  Card,
+  Input,
+  Layout,
+  Modal,
+  Text,
+} from "@ui-kitten/components";
 import { useState } from "react";
+import Toast from "react-native-toast-message";
 
 type TopBarProps = {
-  addItem: (label: string) => void;
+  items: ItemListProps[];
+  setItems: React.Dispatch<React.SetStateAction<ItemListProps[]>>;
 };
 
-export const TopBar: React.FC<TopBarProps> = ({addItem}) => {
+const saveItemsMutation = gql`
+  mutation SaveItems($items: [ItemInput!]!) {
+    saveItems(items: $items) {
+      id
+      label
+      isChecked
+    }
+  }
+`;
+
+export const TopBar: React.FC<TopBarProps> = ({ items, setItems }) => {
   const [visible, setVisible] = useState(false);
   const [value, setValue] = useState("");
+
+  const [saveItems] = useMutation(saveItemsMutation);
 
   const toggleVisibility = () => {
     setVisible(!visible);
@@ -19,9 +42,43 @@ export const TopBar: React.FC<TopBarProps> = ({addItem}) => {
 
   const addNewItem = () => {
     if (value.trim() !== "") {
-      addItem(value);
+      setItems((prevItems) => [
+        ...(prevItems ?? []),
+        {
+          label: value.trim(),
+          isChecked: false,
+        },
+      ]);
       setValue("");
       toggleVisibility();
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const inputItems = items.map(({ label, isChecked }) => ({
+        label,
+        isChecked,
+      }));
+
+      const result = await saveItems({
+        variables: { items: inputItems },
+      });
+
+      console.log("result", result);
+      setItems(result.data.saveItems);
+
+      Toast.show({
+        type: "success",
+        text1: "Items saved successfully",
+      });
+      console.log("Saved items:", result.data.saveItems);
+    } catch (err) {
+      Toast.show({
+        type: "error",
+        text1: "Ooops, something went wrong",
+        text2: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
@@ -36,7 +93,12 @@ export const TopBar: React.FC<TopBarProps> = ({addItem}) => {
       }}
     >
       <Text category="h1">My Todo List</Text>
-      <Button onPress={toggleVisibility}>Add</Button>
+      <Layout style={{ flexDirection: "row", gap: 8 }}>
+        <Button onPress={toggleVisibility}>Add</Button>
+        <Button onPress={handleSave} status="success">
+          Save
+        </Button>
+      </Layout>
 
       <Modal
         visible={visible}

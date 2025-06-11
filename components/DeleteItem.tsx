@@ -6,9 +6,9 @@ type DeleteItemProps = {
 
 export const DeleteItem: React.FC<DeleteItemProps> = ({ deleteItem }) => {
   return (
-        <Button onPress={deleteItem} size="tiny">
-          Delete
-        </Button>
+    <Button onPress={deleteItem} size="tiny">
+      Delete
+    </Button>
   );
 };
 
